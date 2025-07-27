@@ -5,8 +5,9 @@ interface Venue {
   name: string;
   location: string;
   capacity: number;
-  pricePerHour: number;
+  price: number;
   type: string;
+  imageUrl?: string;
 }
 
 interface UseVenuesResult {
@@ -47,10 +48,10 @@ export const useVenues = (): UseVenuesResult => {
 
   // Filter the venues based on categories
   const featuredVenues = venues.filter((venue) =>
-    ["Football Turf", "Auditorium"].includes(venue.type)
+    ["Turf", "Auditorium"].includes(venue.type)
   );
   const turfEvents = venues.filter(
-    (venue) => venue.type === "Football Turf" || venue.type === "Cricket Turf"
+    (venue) => venue.type === "Turf" || venue.type === "Cricket Turf"
   );
   const auditoriumEvents = venues.filter((venue) => venue.type === "Auditorium");
   const otherEvents = venues.filter((venue) => venue.type === "Other Event");

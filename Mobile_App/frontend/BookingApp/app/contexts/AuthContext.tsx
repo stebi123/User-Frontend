@@ -7,40 +7,41 @@ import React, {
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Define user shape
 interface User {
   id: number;
   username: string;
   email: string;
 }
 
-// Define context shape
 interface AuthContextType {
   isLoggedIn: boolean;
+  isGuest: boolean;
   token: string | null;
   user: User | null;
   login: (token: string, userData: User) => Promise<void>;
+  loginAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
+  loading: boolean; // ✅
 }
 
-// Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load from AsyncStorage on mount
   useEffect(() => {
     const loadStoredAuth = async () => {
       try {
         const storedToken = await AsyncStorage.getItem("authToken");
         const storedUser = await AsyncStorage.getItem("authUser");
+        const guestStatus = await AsyncStorage.getItem("isGuest");
 
         if (storedToken) setToken(storedToken);
         if (storedUser) setUser(JSON.parse(storedUser));
+        setIsGuest(guestStatus === "true");
       } catch (err) {
         console.error("Failed to load auth info:", err);
       } finally {
@@ -50,44 +51,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadStoredAuth();
   }, []);
 
-  // Save token + user on login
   const login = async (newToken: string, userData: User) => {
     setToken(newToken);
     setUser(userData);
+    setIsGuest(false);
     await AsyncStorage.setItem("authToken", newToken);
     await AsyncStorage.setItem("authUser", JSON.stringify(userData));
-    await AsyncStorage.setItem("user", JSON.stringify({
-  id: userData.id,
-  username: userData.username,
-  email: userData.email,
-}));
-
+    await AsyncStorage.setItem("isGuest", "false");
   };
 
-  // Remove token + user on logout
-  const logout = async () => {
+  const loginAsGuest = async () => {
+    await AsyncStorage.multiRemove(["authToken", "authUser"]);
     setToken(null);
     setUser(null);
-    await AsyncStorage.removeItem("authToken");
-    await AsyncStorage.removeItem("authUser");
+    setIsGuest(true);
+    await AsyncStorage.setItem("isGuest", "true");
   };
 
-  const value: AuthContextType = {
-    isLoggedIn: !!token,
-    token,
-    user,
-    login,
-    logout,
+  const logout = async () => {
+    await AsyncStorage.multiRemove(["authToken", "authUser", "isGuest"]);
+    setToken(null);
+    setUser(null);
+    setIsGuest(false);
   };
 
-  if (loading) return null; // or splash screen
+const value: AuthContextType = {
+  isLoggedIn: !!token || isGuest,
+  isGuest,
+  token,
+  user,
+  login,
+  loginAsGuest,
+  logout,
+  loading, // ✅ include this
+};
+
+
+  if (loading) return null;
 
   return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-// Hook to use context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

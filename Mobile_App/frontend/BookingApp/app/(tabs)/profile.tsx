@@ -1,10 +1,12 @@
 import { Stack, Link, router } from "expo-router";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Platform, ActivityIndicator } from "react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { LinearGradient } from "expo-linear-gradient";
+
 
 const makeStyles = (isDark: boolean) =>
   StyleSheet.create({
@@ -22,6 +24,24 @@ const makeStyles = (isDark: boolean) =>
       height: 100,
       borderRadius: 50,
       marginBottom: 10,
+    },
+    errorText: {
+      fontSize: 16,
+      color: "red",
+      textAlign: "center",
+      marginTop: 20,
+    },
+    button: {
+      borderRadius: 12,
+      paddingVertical: 15,
+      alignItems: "center",
+      marginTop: 20,
+      overflow: "hidden",
+    },
+    buttonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "600",
     },
     profileName: {
       fontSize: 24,
@@ -67,9 +87,39 @@ interface User {
 export default function Profile() {
   const { isDark, toggleTheme } = useTheme() || { isDark: false, toggleTheme: () => {} };
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
-  const { user, isLoggedIn, logout } = useAuth();
+  const { user, isLoggedIn, logout,loading:authLoading,isGuest } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const primary = isDark ? "#5a9cff" : "#3478f6";
+    const secondary = isDark ? "#3b6cd4" : "#2a5cc4";
+     if (authLoading) {
+        return (
+          <View style={styles.container}>
+            <Stack.Screen options={{ title: "Book Venue" }} />
+            <ActivityIndicator size="large" color={primary} />
+          </View>
+        );
+      }
+    
+      if (!user && !isGuest) return null;
+    
+      if (isGuest) {
+        return (
+          <View style={styles.container}>
+            <Stack.Screen options={{ title: "Book Venue" }} />
+            <Text style={styles.errorText}>Guests cannot view this page. Please sign in.</Text>
+            <Link href="/auth/Login" asChild>
+              <TouchableOpacity style={{ ...styles.button, marginTop: 20 }}>
+                <LinearGradient
+                  colors={[primary, secondary]}
+                  style={StyleSheet.absoluteFill}
+                />
+                <Text style={styles.buttonText}>Sign In</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        );
+      }
 
   useEffect(() => {
     const fetchUserDetails = async () => {

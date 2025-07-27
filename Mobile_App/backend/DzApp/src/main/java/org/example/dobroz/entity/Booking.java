@@ -28,12 +28,21 @@ public class Booking {
 
     @Column(name = "status", nullable = false)
     private String status;
+
+    public String getVenueName() {
+        return venueName;
+    }
+
+    public void setVenueName(String venueName) {
+        this.venueName = venueName;
+    }
     private String venueName;
 
     public Booking() {}
 
     public Booking(Venue venue, String userEmail, LocalDateTime startTime, LocalDateTime endTime, String status) {
         this.venue = venue;
+        this.venueName=venue.getName();
         this.userEmail = userEmail;
         this.startTime = startTime;
         this.endTime = endTime;

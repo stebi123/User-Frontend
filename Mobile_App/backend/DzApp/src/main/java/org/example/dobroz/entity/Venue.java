@@ -1,6 +1,9 @@
 package org.example.dobroz.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 
 @Entity
 @Table(name = "venues") // Explicit table name (optional, but clearer)
@@ -22,7 +25,8 @@ public class Venue {
     @Column(nullable = false)
     private String type;
 
-    @Column(name = "image_url")
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     // Constructors

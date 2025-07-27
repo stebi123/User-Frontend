@@ -7,9 +7,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../contexts/AuthContext'; // ✅ import auth context
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -18,7 +19,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const { login } = useAuth(); // ✅ auth context login method
+  const { login, loginAsGuest } = useAuth(); // Include guest login
 
   const handleLogin = async () => {
     setLoading(true);
@@ -36,18 +37,14 @@ const Login: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('Login response:', data);
-
       if (!data.accessToken) throw new Error('No token received');
 
-      // ✅ Save token & user info to context
       await login(data.accessToken, {
         id: data.id,
         username: data.username,
         email: data.email,
       });
 
-      // ✅ Redirect to homepage after login
       router.replace('/HomePage');
     } catch (err: any) {
       setError(err.message || 'Login failed');
@@ -56,9 +53,14 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleGuestLogin = async () => {
+    await loginAsGuest();
+    router.replace('/HomePage'); // Redirect guest to home page too
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Welcome Back</Text>
 
       <TextInput
         style={styles.input}
@@ -84,18 +86,29 @@ const Login: React.FC = () => {
         <ActivityIndicator size="large" color="#3478f6" />
       ) : (
         <>
-          <Button title="Login" onPress={handleLogin} />
-          <View style={{ marginTop: 10 }} />
-          <Button
-            title="Don't have an account? Register"
+          <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
+            <Text style={styles.loginText}>Login</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             onPress={() => router.push('/auth/Register')}
-          />
+            style={styles.registerBtn}
+          >
+            <Text style={styles.registerText}>
+              Don’t have an account? Register
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleGuestLogin} style={styles.guestBtn}>
+            <Text style={styles.guestText}>Continue as Guest</Text>
+          </TouchableOpacity>
         </>
       )}
     </View>
   );
 };
 
+export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -104,7 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 24,
     textAlign: 'center',
@@ -122,6 +135,36 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
+  loginBtn: {
+    backgroundColor: '#3478f6',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  loginText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  registerBtn: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  registerText: {
+    color: '#3478f6',
+    fontWeight: '500',
+  },
+  guestBtn: {
+    marginTop: 25,
+    padding: 12,
+    borderColor: '#aaa',
+    borderWidth: 1,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  guestText: {
+    color: '#333',
+    fontWeight: '600',
+  },
 });
-
-export default Login;

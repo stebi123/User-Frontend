@@ -62,7 +62,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:8081")); // React Vite app URL
+        configuration.setAllowedOrigins(List.of("http://localhost:8081", "http://localhost:19006")); // Added Expo dev server
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
         configuration.setAllowCredentials(true); // Important for cookies
@@ -76,15 +76,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // Consider enabling CSRF for production environments
+                .csrf(csrf -> csrf.disable()) // Consider enabling with custom config for production
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/auth/**","/error").permitAll()
+                        auth.requestMatchers("/api/auth/**", "/error").permitAll()
                                 .requestMatchers("/api/venues/**").permitAll()
                                 .requestMatchers("/api/bookings/**").permitAll()
                                 .requestMatchers("/api/auth/me").authenticated()
                                 .requestMatchers("/api/bookings/user").authenticated()
+                                .requestMatchers("/api/auth/users/**").authenticated() // Added for user updates
                                 .anyRequest().authenticated()
                 );
 

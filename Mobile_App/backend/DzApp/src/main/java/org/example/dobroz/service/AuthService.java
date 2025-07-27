@@ -1,6 +1,5 @@
 package org.example.dobroz.service;
 
-import jakarta.validation.Valid;
 import org.example.dobroz.dto.JwtResponse;
 import org.example.dobroz.dto.LoginRequest;
 import org.example.dobroz.dto.SignupRequest;
@@ -40,39 +39,40 @@ public class AuthService {
     @Autowired
     JwtUtils jwtUtils;
 
-    // ✅ Sign in logic
+    // Sign in logic
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String token = jwtUtils.generateJwtToken(authentication); // ✅ get the actual token string
-        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(authentication); // ✅ cookie as before
+        String token = jwtUtils.generateJwtToken(authentication);
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(authentication);
 
         User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-
-        // ✅ pass token string too
         return new JwtResponse(
                 token, user.getId(), user.getUsername(), user.getEmail(), jwtCookie);
     }
 
-
-    // ✅ Register logic
-    public ResponseEntity<?> registerUser(SignupRequest signUpRequest) {
+    // Register logic
+    public ResponseEntity<RegisterResponse> registerUser(SignupRequest signUpRequest) {
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.badRequest().body("Error: Username is already taken!");
+            return ResponseEntity.badRequest().body(new RegisterResponse("Error: Username is already taken!"));
         }
 
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity.badRequest().body("Error: Email is already in use!");
+            return ResponseEntity.badRequest().body(new RegisterResponse("Error: Email is already in use!"));
         }
 
         User user = new User(signUpRequest.getUsername(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()));
+
+        // Set name and phone if provided
+//        user.setName(signUpRequest.getName());
+//        user.setPhone(signUpRequest.getPhone());
 
         Set<String> strRoles = signUpRequest.getRoles();
         Set<Role> roles = new HashSet<>();
@@ -105,12 +105,23 @@ public class AuthService {
         user.setRoles(roles);
         userRepository.save(user);
 
-        return ResponseEntity.ok("User registered successfully!");
+        return ResponseEntity.ok(new RegisterResponse("User registered successfully!"));
     }
 
-    // ❌ Remove this OR add implementation
-    // public User validateCredentials(@Valid LoginRequest loginRequest) {
-    // }
+    // Response class for registration
+    public static class RegisterResponse {
+        private String message;
 
-    // ✅ If not needed, just remove the method
+        public RegisterResponse(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    }
 }

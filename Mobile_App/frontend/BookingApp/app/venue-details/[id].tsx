@@ -110,7 +110,7 @@ interface Venue {
   name: string;
   location: string;
   capacity: number;
-  pricePerHour: number;
+  price: number;
   type: string;
   imageUrl: string; // Added imageUrl to the interface
 }
@@ -213,7 +213,7 @@ export default function VenueDetails() {
           <Text style={styles.details}>
             {venue.type} • {venue.location} • Capacity: {venue.capacity}
           </Text>
-          <Text style={styles.details}>Price: ₹{venue.pricePerHour}/hour</Text>
+          <Text style={styles.details}>Price: ₹{venue.price}/hour</Text>
           <Text style={styles.rating}>⭐ 4.5</Text>
         </Animated.View>
 
